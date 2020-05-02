@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<audio id=sound-good >
+  <source src="bleep.mp3" type="audio/mpeg">
+  Your browser does not support the audio element.
+</audio>
+<audio id=sound-bad >
+  <source src="tick.mp3" type="audio/mpeg">
+  Your browser does not support the audio element.
+</audio>
+<button onclick="start_repeat()" type="button">Start</button>
+<button onclick="stop_repeat()" type="button">Stop</button>
+<p id=message></p>
+<script>
+
+var state=0
+var count=0
+var nextState=0
+var repeatSecs=1.5
+var lastSound=0
+var tickInterval=50
+var lastCheckGood=true
+var xhr = new XMLHttpRequest();
+
+setInterval(function () {
+
+    count++
+    console.log("tick")
+    switch(state) {
+        case 0:  // off
+            break;
+        case 1:  // start link check/sound
+            xhr.open("GET", "?"+count, true);
+            xhr.onreadystatechange = function () {
+                if( xhr.readyState == 4 ) {
+                    console.log("xhr.status()",xhr.status)
+                    if( xhr.status == 200 ) {
+                        lastCheckGood=true
+                    } else {
+                        lastCheckGood=false
+                    }
+                    state=3
+                }
+            };
+            xhr.timeout = 1000;
+            xhr.ontimeout = function () {
+                xhr.abort()
+                lastCheckGood=false
+                state=3
+            }
+            xhr.send()
+            state=2
+            break
+        case 2:  // wait on result of link check
+            break
+        case 3:  // play indicator sound
+            console.log("play sound")
+            if( lastCheckGood ) {
+                document.getElementById("sound-good").play()
+            } else {
+                document.getElementById("sound-bad").play()
+            }
+            lastSound=count
+            state=4
+            break;
+        case 4:  // pause before next check/sound then state=1
+            if( count < ( lastSound + (repeatSecs*(1000/tickInterval))) ) break
+            state=1
+            break;
+        default:
+            console.log("no action")
+            break;
+    }
+},tickInterval)
+
+function start_repeat(k) {
+    state=1
+    lastSound=count
+    console.log("start_repeat")
+}
+
+function stop_repeat() {
+    state=0
+    console.log("stop_repeat")
+}
+
+function repeat(k) {
+    console.log(repeating)
+    if( repeating==1 ) {
+        console.log("play sound")
+        //document.getElementById("sound").play()
+        jj=setTimeout(repeat,k,k)
+    }
+}
+
+</script>
+</body>
+</html>
+
